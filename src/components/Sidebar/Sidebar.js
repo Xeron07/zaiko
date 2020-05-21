@@ -137,7 +137,7 @@ class Sidebar extends React.Component {
                 </li>
               );
             })}
-            <li
+            {/* <li
               className="active-pro"
             >
               <ReactstrapNavLink
@@ -146,7 +146,7 @@ class Sidebar extends React.Component {
                 <i className="tim-icons icon-spaceship" />
                 <p>Upgrade to PRO</p>
               </ReactstrapNavLink>
-            </li>
+            </li> */}
           </Nav>
         </div>
       </div>

@@ -110,61 +110,56 @@ class Expense extends React.Component{
             <Row>
                 <Col className="pr-md-1" md="8">
                 <Card>
-                                <CardHeader>
-                                    <h5 className="title">Client Form</h5>
-                                </CardHeader>
-                                <CardBody>
-                                    <Form>
+                  <CardHeader>
+                    <h5 className="title">Expense Form</h5>
+                     </CardHeader>
+                       <CardBody>
+                          <Form>
                                      
-                                        <fieldset style={{border:'1px solid ',padding:"10px",borderRadius:"5px"}}>
-                                                   <legend style={{fontSize:"medium"}}>Expence information</legend>
-                                               <Row>
-                                            
-                                               <Col className="pr-md-1" md="5">
-                                                   <FormGroup>
-                                                       <label>Expence Type</label>
-                                                       <Input
-                                                           defaultValue=""
-                                                           placeholder="Select Type"
-                                                           type="select"
-                                                       />
-                                                   </FormGroup>
-                                               </Col>
-                                               <Col md="5">
-                                                <FormGroup>
-                                                    <label>Amount</label>
-                                                    <Input
-                                                        defaultValue=""
-                                                        placeholder="Amount paid"
-                                                        type="number"
-                                                    />
-                                                </FormGroup>
-                                            </Col>
-                                               
-                                           </Row>
-
-
-                                        <Row>
-                                        <Col md="11">
-                                                   <FormGroup>
-                                                       <label htmlFor="exampleInputEmail1">
-                                                           Details
-                                                       </label>
-                                                       <Input placeholder="Write details about expense" type="textarea" />
-                                                   </FormGroup>
-                                               </Col>
+                            <fieldset style={{border:'1px solid ',padding:"10px",borderRadius:"5px"}}>
+                             <legend style={{fontSize:"medium"}}>Expence information</legend>
+                              <Row> 
+                                 <Col className="pr-md-1" md="5">
+                                 <FormGroup>
+                                  <label>Expence Type</label>
+                                     <Input
+                                      defaultValue=""
+                                      placeholder="Select Type"
+                                      type="select"
+                                      />
+                                     </FormGroup>
+                                  </Col>
+                                   <Col md="5">
+                                    <FormGroup>
+                                   <label>Amount</label>
+                                   <Input
+                                    defaultValue=""
+                                    placeholder="Amount paid"
+                                     type="number"
+                                    />
+                                   </FormGroup>
+                                      </Col>          
                                         </Row>
-                                      
-                                        <Row>
-                                            <Col className="pr-md-1" md="4">
-                                                <FormGroup>
-                                                    <label>Select date</label>
-                                                    <Input
-                                                        defaultValue=""
-                                                        placeholder=""
-                                                        type="date"
-                                                    />
-                                                </FormGroup>
+                                    <Row>
+                                     <Col md="11">
+                                 <FormGroup>
+                                  <label htmlFor="exampleInputEmail1">
+                                     Details
+                                  </label>
+                                  <Input placeholder="Write details about expense" type="textarea" />
+                                </FormGroup>
+                                 </Col>
+                                </Row> 
+                             <Row>
+                              <Col className="pr-md-1" md="4">
+                               <FormGroup>
+                               <label>Select date</label>
+                                <Input
+                                  defaultValue=""
+                                placeholder=""
+                                  type="date"
+                               />
+                           </FormGroup>
                                             </Col>
 
                                         </Row>
@@ -172,15 +167,45 @@ class Expense extends React.Component{
                               
                                             
                                             </Form>
-                                            </CardBody>
-                                            <CardFooter>
-                                    <Button className="btn-fill" color="primary" type="submit">
-                                        Save
-                                    </Button>
-                                </CardFooter>
-                                            </Card>
+                       </CardBody>
+                     <CardFooter>
+                     <Button className="btn-fill" color="primary" type="submit">
+                        Save
+                   </Button>
+                 </CardFooter>
+                </Card>
                           
                 </Col>
+                
+                <Col className="pr-md-1" md="4">
+                <Card>
+                  <CardHeader>
+                    <h5 className="title">Add New Expense Type</h5>
+                     </CardHeader>
+                       <CardBody>
+                           <Form>
+                           <Row> 
+                                 <Col className="pr-md-1" md="11">
+                                 <FormGroup>
+                                  <label>Expence Type</label>
+                                     <Input
+                                      defaultValue=""
+                                      placeholder="Enter a type"
+                                      type="text"
+                                      />
+                                     </FormGroup>
+                                  </Col>
+                                  </Row>
+                           </Form>
+                       </CardBody>
+                       <CardFooter>
+                        <Button className="btn-fill" color="primary" type="submit">
+                          Add
+                         </Button>
+                      </CardFooter>
+                       </Card>
+
+                       </Col>
             </Row>
         );
     }
