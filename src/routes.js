@@ -23,7 +23,9 @@ import Rtl from "views/Rtl.js";
 import TableList from "views/TableList.js";
 import Typography from "views/Typography.js";
 import UserProfile from "views/UserProfile.js";
-
+import Sell from "views/Sell.js";
+import Purchase from "views/Purchase.js";
+import Storage from "./views/Storage.js";
 var routes = [
   {
     path: "/dashboard",
@@ -31,6 +33,30 @@ var routes = [
     rtlName: "لوحة القيادة",
     icon: "tim-icons icon-chart-pie-36",
     component: Dashboard,
+    layout: "/admin"
+  },
+  {
+    path: "/sell",
+    name: "Sell Product",
+    rtlName: "لوحة القيادة",
+    icon: "tim-icons icon-basket-simple",
+    component: Sell,
+    layout: "/admin"
+  },
+  {
+    path: "/purchase",
+    name: "Purchase Product",
+    rtlName: "لوحة القيادة",
+    icon: "tim-icons icon-cart",
+    component: Purchase,
+    layout: "/admin"
+  },
+  {
+    path: "/storage",
+    name: "Storage data",
+    rtlName: "لوحة القيادة",
+    icon: "tim-icons icon-bag-16",
+    component: Storage,
     layout: "/admin"
   },
   {
