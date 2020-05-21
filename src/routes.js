@@ -27,6 +27,7 @@ import Sell from "views/Sell.js";
 import Purchase from "views/Purchase.js";
 import Storage from "./views/Storage.js";
 import Client from "./views/Client.js";
+import Expense from "./views/Expense.js";
 var routes = [
   {
     path: "/dashboard",
@@ -66,6 +67,14 @@ var routes = [
     rtlName: "لوحة القيادة",
     icon: "tim-icons icon-satisfied",
     component: Client,
+    layout: "/admin"
+  },
+  {
+    path: "/expense",
+    name: "Expense data",
+    rtlName: "لوحة القيادة",
+    icon: "tim-icons icon-bus-front-12",
+    component: Expense,
     layout: "/admin"
   },
   {
