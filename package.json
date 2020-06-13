@@ -1,59 +1,50 @@
 {
-  "name": "black-dashboard-react",
-  "version": "1.1.0",
-  "private": true,
-  "homepage": "https://demos.creative-tim.com/black-dashboard-react/#/admin/dashboard",
-  "dependencies": {
-    "@types/react": "16.9.23",
-    "chart.js": "2.9.3",
-    "classnames": "2.2.6",
-    "concurrently": "^5.2.0",
-    "electron": "^9.0.0",
-    "electron-builder": "^22.6.1",
-    "electron-is-dev": "^1.2.0",
-    "history": "4.10.1",
-    "node-sass": "4.13.1",
-    "perfect-scrollbar": "1.5.0",
-    "prop-types": "15.7.2",
-    "react": "16.13.0",
-    "react-chartjs-2": "2.9.0",
-    "react-dom": "16.13.0",
-    "react-google-maps": "9.4.5",
-    "react-notification-alert": "0.0.12",
-    "react-router-dom": "5.1.2",
-    "react-scripts": "3.4.0",
-    "reactstrap": "8.4.1",
-    "wait-on": "^5.0.0"
-  },
-  "main": "public/electron.js",
+  "name": "emerging-it",
+  "version": "1.0.0",
+  "description": "emerging it test project",
+  "main": "main.js",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build && gulp licenses",
-    "test": "react-scripts test --env=jsdom",
-    "electron-dev": "concurrently \"BROWSER=none npm start\" \"wait-on http://localhost:3000 && electron .\"",
-    "eject": "react-scripts eject",
-    "install:clean": "rm -rf node_modules/ && rm -rf package-lock.json && npm install && npm start",
-    "compile-scss": "node-sass src/assets/scss/black-dashboard-react.scss src/assets/css/black-dashboard-react.css",
-    "minify-sass": "node-sass src/assets/scss/black-dashboard-react.scss src/assets/css/black-dashboard-react.min.css --output-style compressed",
-    "map-sass": "node-sass src/assets/scss/black-dashboard-react.scss src/assets/css/black-dashboard-react.css --source-map true"
+    "server": "node main.js",
+    "client": "npm run electron-dev --prefix client",
+    "ui": "npm start --prefix client",
+    "dev": "concurrently \" npm run server \" \" npm run client \"",
+    "electron-dev": "concurrently \"BROWSER=none npm start\" \"wait-on http://localhost:3000 && electron . \"",
+    "all": "",
+    "start": "nodemon server",
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix client && npm run build --prefix client"
   },
-  "eslintConfig": {
-    "extends": "react-app"
+  "repository": {
+    "type": "git",
+    "url": "git+https://xeron07@bitbucket.org/xeron07/emerging-it.git"
   },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ],
-  "optionalDependencies": {
-    "@types/googlemaps": "3.39.3",
-    "@types/markerclustererplus": "2.1.33",
-    "eslint-plugin-flowtype": "3.13.0",
-    "typescript": "3.8.3"
-  },
-  "devDependencies": {
-    "gulp": "4.0.2",
-    "gulp-append-prepend": "1.0.8"
+  "author": "Md. Minhaz Uddin",
+  "license": "MIT",
+  "homepage": "https://bitbucket.org/xeron07/emerging-it#readme",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
+    "concurrently": "^5.0.0",
+    "connect-flash": "^0.1.1",
+    "cookie-parser": "^1.4.4",
+    "cookie-session": "^1.3.3",
+    "dotenv": "^8.2.0",
+    "ejs": "^2.7.1",
+    "express": "^4.17.1",
+    "joi": "^14.3.1",
+    "jsonwebtoken": "^8.5.1",
+    "knex": "^0.21.1",
+    "mongoose": "^5.7.10",
+    "mongoose-sequence": "^5.2.2",
+    "mssql": "^6.2.0",
+    "nodemon": "^1.19.4",
+    "passport": "^0.4.0",
+    "passport-local": "^1.0.0",
+    "path": "^0.12.7",
+    "react-redux": "^7.1.3",
+    "react-router": "^5.1.2",
+    "redux": "^4.0.4",
+    "sqlite3": "^4.2.0",
+    "wait-on": "^3.3.0"
   }
 }
