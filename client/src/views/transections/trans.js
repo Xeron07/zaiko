@@ -22,11 +22,15 @@ import {
   Button,
 } from "reactstrap";
 import { Link } from "react-router-dom";
+import XLXS from "xlsx";
+
+import { saveAs } from "@progress/kendo-file-saver";
 
 class Client extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      allTransections: [],
       data: [],
       selectedData: [],
       selectedProducts: [],
@@ -37,7 +41,7 @@ class Client extends React.Component {
   }
   toggleModalDemo() {
     this.state.modalDemo = !this.state.modalDemo;
-    this.setState(this.state);
+    this.setState();
   }
 
   componentDidMount = () => {
@@ -46,6 +50,13 @@ class Client extends React.Component {
 
   reloadDatas = () => {
     this.setState({ isLoading: true });
+    fetch("/api/operation/trans/all")
+      .then((response) => response.json())
+      .then((data) => {
+        //console.log(data);
+        this.state.allTransections = [...data];
+        this.setState(this.state);
+      });
     fetch("/api/operation/transection/all")
       .then((response) => response.json())
       .then((data) => {
@@ -103,7 +114,7 @@ class Client extends React.Component {
                 }}>
                 <legend style={{ fontSize: "medium" }}>Search</legend>
                 <Row>
-                  <Col className='pr-md-1' md='11'>
+                  <Col className='pr-md-1' md='7'>
                     <FormGroup>
                       <InputGroup>
                         <InputGroupAddon addonType='prepend'>
@@ -119,18 +130,27 @@ class Client extends React.Component {
                             let str = event.target.value;
                             if (!str) {
                               this.state.selectedData = [...this.state.data];
-                              this.setState(this.state);
+                              this.setState();
                               return;
                             }
 
                             this.state.selectedData = this.state.data.filter(
                               (d) => d.t_id.toLowerCase().indexOf(str) > -1
                             );
-                            this.setState(this.state);
+                            this.setState();
                           }}
                         />
                       </InputGroup>
                     </FormGroup>
+                  </Col>
+                  <Col className='pr-md-1' md='4'>
+                    <Button
+                      className='btn-fill'
+                      color='primary'
+                      type='button'
+                      onClick={() => this.exportXCL()}>
+                      Export Excel
+                    </Button>
                   </Col>
                 </Row>
               </fieldset>
@@ -146,7 +166,7 @@ class Client extends React.Component {
                     <th>Expense</th>
                     <th>Paid</th>
                     <th>Due</th>
-                    <th>Client</th>
+                    {/* <th>Client</th> */}
                   </tr>
                 </thead>
                 <tbody>
@@ -185,7 +205,7 @@ class Client extends React.Component {
                         </td>
                         <td>{t.payment.paid}</td>
                         <td>{t.payment.due}</td>
-                        <td>Update Paid</td>
+                        {/* <td>Update Paid</td> */}
                       </tr>
                     );
                   })}
@@ -295,6 +315,82 @@ class Client extends React.Component {
         <hr />
       </div>
     );
+  };
+
+  s2ab = (s) => {
+    var buf = new ArrayBuffer(s.length);
+    var view = new Uint8Array(buf);
+    for (var i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xff;
+    return buf;
+  };
+
+  exportXCL = () => {
+    if (this.state.allTransections.length > 0) {
+      let wb = XLXS.utils.book_new();
+      wb.Props = {
+        Title: `Transection of ${new Date().getDate()}/${new Date().getMonth()}/${new Date().getFullYear()} - T:${new Date().toLocaleString(
+          "en-US",
+          { hour: "numeric", minute: "numeric", hour12: true }
+        )}`,
+        Subject: "Daily Transection",
+        Author: "SellFish Software",
+        CreatedDate: new Date(),
+      };
+      wb.SheetNames.push("Clear Sheet");
+      let a = [];
+      let data = [
+        [
+          "#",
+          "ID",
+          "Time",
+          "Type",
+          "Products",
+          "Total Amount",
+          "Paid",
+          "Due",
+          "Discount",
+          "Client Name",
+          "Phone Number",
+        ],
+      ];
+      let it = this.state.allTransections;
+      for (let i = 0; i < it.length; i++) {
+        a.push(i + 1);
+        a.push(it[i].t_id);
+        let time = new Date(it[i].time);
+        a.push(
+          `${time.getDate()}/${time.getMonth()}/${time.getFullYear()}: T- ${time.toLocaleString(
+            "en-US",
+            { hour: "numeric", minute: "numeric", hour12: true }
+          )}`
+        );
+        a.push(it[i].type);
+        a.push(it[i].products.map((e) => e.name).join(","));
+        a.push(it[i].amount.totalAmount);
+        a.push(it[i].payment.paid);
+        a.push(it[i].payment.due);
+        a.push(it[i].amount.discount);
+        a.push(it[i].client[0].name);
+        a.push(it[i].client[0].pn);
+        data.push(a);
+        a = [];
+      }
+
+      let ws = XLXS.utils.aoa_to_sheet(data);
+      wb.Sheets["Clear Sheet"] = ws;
+      let dataView = XLXS.write(wb, {
+        bookType: "xlsx",
+        type: "binary",
+      });
+      saveAs(
+        new Blob([this.s2ab(dataView)], {
+          type: "application/octet-stream",
+        }),
+        `DailyTransection${Date.now()}.xlsx`
+      );
+    } else {
+      alert("No Data to export");
+    }
   };
 }
 

@@ -204,7 +204,7 @@ class singleTracnsection extends React.Component {
   render() {
     return (
       <div className='content'>
-        {this.navView()}
+        {this.monthlyUI()}
         <Modal
           isOpen={this.state.modalLarge}
           toggle={this.toggleModalLarge}
@@ -286,9 +286,13 @@ class singleTracnsection extends React.Component {
                 padding: "5px",
                 marginBottom: "10px",
               }}>
-              Genarated Date: {new Date().getDate()}/{new Date().getMonth()}/
-              {new Date().getFullYear()} - {new Date().getHours()}.
-              {new Date().getMinutes()}
+              Generated Date: {new Date().getDate()}/{new Date().getMonth()}/
+              {new Date().getFullYear()} - {"Time:"}
+              {new Date().toLocaleString("en-US", {
+                hour: "numeric",
+                minute: "numeric",
+                hour12: true,
+              })}
             </Text>
             <Text style={{ backgroundColor: "#8e44ad", color: "white" }}>
               Report
@@ -498,7 +502,7 @@ class singleTracnsection extends React.Component {
               onClick={() => {
                 this.toggleModalLarge();
               }}>
-              <i className='tim-icons icon-heart-2' /> Generate PDF
+              <i className='tim-icons icon-paper' /> Generate PDF
             </Button>
           </Row>
         </CardBody>

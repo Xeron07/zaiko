@@ -5,23 +5,15 @@ import Swal from "sweetalert2";
 import axios from "axios";
 // reactstrap components
 import {
-  Breadcrumb,
-  BreadcrumbItem,
   Card,
   CardHeader,
   CardBody,
   CardFooter,
   Button,
-  CardTitle,
-  Table,
   Row,
   Col,
   FormGroup,
-  InputGroup,
-  InputGroupAddon,
-  InputGroupText,
   Input,
-  Form,
 } from "reactstrap";
 
 class singleTracnsection extends React.Component {

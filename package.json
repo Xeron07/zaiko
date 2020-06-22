@@ -4,6 +4,8 @@
   "description": "emerging it test project",
   "main": "main.js",
   "scripts": {
+    "build": "webpack",
+    "test": "node ./dist/server.js",
     "server": "node main.js",
     "client": "npm run electron-dev --prefix client",
     "ui": "npm start --prefix client",
@@ -24,7 +26,7 @@
     "axios": "^0.19.2",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.0",
-    "concurrently": "^5.0.0",
+    "concurrently": "^5.2.0",
     "connect-flash": "^0.1.1",
     "cookie-parser": "^1.4.4",
     "cookie-session": "^1.3.3",
@@ -33,7 +35,6 @@
     "express": "^4.17.1",
     "joi": "^14.3.1",
     "jsonwebtoken": "^8.5.1",
-    "knex": "^0.21.1",
     "mongoose": "^5.7.10",
     "mongoose-sequence": "^5.2.2",
     "mssql": "^6.2.0",
@@ -44,7 +45,6 @@
     "react-redux": "^7.1.3",
     "react-router": "^5.1.2",
     "redux": "^4.0.4",
-    "sqlite3": "^4.2.0",
     "wait-on": "^3.3.0"
   }
 }

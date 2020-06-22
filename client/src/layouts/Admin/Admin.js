@@ -35,7 +35,7 @@ import singleClient from "../../views/clients/singleClient.js";
 import pdfComponent from "../../views/pdf.js";
 import routes from "routes.js";
 
-import logo from "assets/img/react-logo.png";
+import logo from "assets/img/SellFish.png";
 import addClient from "../../views/clients/addclient.js";
 
 var ps;

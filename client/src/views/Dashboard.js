@@ -43,6 +43,7 @@ import {
   Modal,
   ModalBody,
   ModalFooter,
+  ModalHeader,
   Table,
   Row,
   Col,
@@ -58,6 +59,53 @@ import {
 } from "variables/charts.js";
 import axios from "axios";
 import Swal from "sweetalert2";
+import XLXS from "xlsx";
+
+import { saveAs } from "@progress/kendo-file-saver";
+import {
+  Page,
+  Text,
+  View,
+  Document,
+  StyleSheet,
+  PDFViewer,
+} from "@react-pdf/renderer";
+
+const styles = StyleSheet.create({
+  page: {
+    flexDirection: "row",
+    backgroundColor: "#E4E4E4",
+  },
+  section: {
+    margin: 15,
+    marginRight: 0,
+    flexGrow: 1,
+    textAlign: "left",
+    width: "10%",
+  },
+  col1: {
+    padding: "5px",
+    fontSize: "10px",
+    width: "100%",
+    marginBottom: "1px",
+    boxSizing: "content-box",
+    height: "20px",
+    padding: "5px",
+    border: "1px solid white",
+    backgroundColor: "#7f8c8d",
+  },
+  col2: {
+    padding: "5px",
+    fontSize: "10px",
+    width: "100%",
+    marginBottom: "1px",
+    boxSizing: "content-box",
+    height: "20px",
+    padding: "5px",
+    border: "1px solid white",
+    backgroundColor: "#bdc3c7",
+  },
+});
 class Dashboard extends React.Component {
   constructor(props) {
     super(props);
@@ -76,18 +124,21 @@ class Dashboard extends React.Component {
       12: "Dec",
     };
     this.state = {
+      modalLarge: false,
       sellData: {},
       purchaseData: {},
       totalSelled: [],
       totalPurchased: [],
       stockData: [],
       selectedProducts: [],
+      transections: [],
       profit: 0,
       fishTypes: 0,
       totalLoss: 0,
       isLoading: true,
       modalDemo: false,
       todayLoss: [],
+      allTransections: [],
       show: true,
     };
   }
@@ -106,7 +157,6 @@ class Dashboard extends React.Component {
     fetch("/api/operation/all")
       .then((response) => response.json())
       .then((data) => {
-        console.log(data);
         this.state.sellData = data.sellData;
         this.state.purchaseData = data.purchaseData;
         this.state.totalSelled = [...data.totalSelled];
@@ -116,6 +166,14 @@ class Dashboard extends React.Component {
         this.state.totalLoss = data.totalLoss;
         this.state.fishTypes = data.fishTypes;
         this.state.todayLoss = data.todayLoss;
+        this.setState(this.state);
+      });
+
+    fetch("/api/operation/daily/trans")
+      .then((response) => response.json())
+      .then((data) => {
+        //console.log(data);
+        this.state.allTransections = [...data];
         this.setState(this.state);
       });
 
@@ -328,6 +386,22 @@ class Dashboard extends React.Component {
       <>
         <div className='content'>
           <Row>
+            <Button
+              className='btn-fill'
+              color='primary'
+              type='button'
+              onClick={() => this.exportXCL()}>
+              Export Excel
+            </Button>
+            <Button
+              className='btn-fill'
+              color='primary'
+              type='button'
+              onClick={() => this.toggleModalLarge()}>
+              Generate PDF
+            </Button>
+          </Row>
+          <Row>
             <Col lg='4'>
               <Card className='card-chart'>
                 <CardHeader>
@@ -490,10 +564,44 @@ class Dashboard extends React.Component {
               </Button>
             </ModalFooter>
           </Modal>
+          <Modal
+            isOpen={this.state.modalLarge}
+            toggle={this.toggleModalLarge}
+            style={{ backgroundColor: "transparent" }}
+            size='lg'>
+            <ModalHeader
+              className='justify-content-center'
+              toggle={this.toggleModalLarge}>
+              PDF
+            </ModalHeader>
+            <ModalBody style={{ background: "transparent" }}>
+              <div
+                style={{
+                  height: "100vh",
+                  width: "100%",
+                  position: "absolute",
+                }}>
+                <PDFViewer
+                  style={{
+                    height: "100%",
+                    width: "100%",
+                    position: "absolute",
+                  }}>
+                  {this.MyDocument()}
+                </PDFViewer>
+              </div>
+            </ModalBody>
+          </Modal>
         </div>
       </>
     );
   }
+
+  toggleModalLarge = () => {
+    this.setState({
+      modalLarge: !this.state.modalLarge,
+    });
+  };
   showProductList = () => {
     console.clear();
     console.log(this.state.selectedProducts);
@@ -520,6 +628,227 @@ class Dashboard extends React.Component {
           })}
         </tbody>
       </Table>
+    );
+  };
+
+  s2ab = (s) => {
+    var buf = new ArrayBuffer(s.length);
+    var view = new Uint8Array(buf);
+    for (var i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xff;
+    return buf;
+  };
+
+  exportXCL = () => {
+    if (this.state.allTransections.length > 0) {
+      let wb = XLXS.utils.book_new();
+      wb.Props = {
+        Title: `Transection of ${new Date().getDate()}/${new Date().getMonth()}/${new Date().getFullYear()} - T:${new Date().toLocaleString(
+          "en-US",
+          { hour: "numeric", minute: "numeric", hour12: true }
+        )}`,
+        Subject: "Daily Transection",
+        Author: "SellFish Software",
+        CreatedDate: new Date(),
+      };
+      wb.SheetNames.push("Clear Sheet");
+      let a = [];
+      let data = [
+        [
+          "#",
+          "ID",
+          "Time",
+          "Type",
+          "Products",
+          "Total Amount",
+          "Paid",
+          "Due",
+          "Discount",
+          "Client Name",
+          "Phone Number",
+        ],
+      ];
+      let it = this.state.allTransections;
+      for (let i = 0; i < it.length; i++) {
+        a.push(i + 1);
+        a.push(it[i].t_id);
+        let time = new Date(it[i].time);
+        a.push(
+          `${time.getDate()}/${time.getMonth()}/${time.getFullYear()}: T- ${time.toLocaleString(
+            "en-US",
+            { hour: "numeric", minute: "numeric", hour12: true }
+          )}`
+        );
+        a.push(it[i].type);
+        a.push(it[i].products.map((e) => e.name).join(","));
+        a.push(it[i].amount.totalAmount);
+        a.push(it[i].payment.paid);
+        a.push(it[i].payment.due);
+        a.push(it[i].amount.discount);
+        a.push(it[i].client[0].name);
+        a.push(it[i].client[0].pn);
+        data.push(a);
+        a = [];
+      }
+
+      let ws = XLXS.utils.aoa_to_sheet(data);
+      wb.Sheets["Clear Sheet"] = ws;
+      let dataView = XLXS.write(wb, {
+        bookType: "xlsx",
+        type: "binary",
+      });
+      saveAs(
+        new Blob([this.s2ab(dataView)], {
+          type: "application/octet-stream",
+        }),
+        `DailyTransection${Date.now()}.xlsx`
+      );
+    } else {
+      alert("No Data to export");
+    }
+  };
+
+  exporPDF = () => {};
+
+  MyDocument = () => {
+    let totalFish = 0;
+    let totalStock = 0;
+    //console.clear();
+    // console.log(this.state.stockData);
+    if (this.state.stockData.length > 0)
+      for (let i = 0; i < this.state.stockData.length; i++) {
+        totalFish += +this.state.stockData[i].totalFish;
+        totalStock += +this.state.stockData[i].totalStock;
+      }
+    return (
+      <Document>
+        <Page size='A4' style={styles.page}>
+          <View style={styles.section}>
+            <Text
+              style={{
+                fontSize: "30px",
+                padding: "10px",
+                marginBottom: "10px",
+              }}>
+              SellFish
+            </Text>
+            <Text
+              style={{
+                fontSize: "10px",
+                padding: "5px",
+                marginBottom: "1px",
+              }}>
+              Daily Report of : {new Date().getDate()}/{new Date().getMonth()}/
+              {new Date().getFullYear()}
+            </Text>
+            <Text
+              style={{
+                fontSize: "10px",
+                padding: "5px",
+                marginBottom: "10px",
+              }}>
+              Generated Time:{" "}
+              {new Date().toLocaleString("en-US", {
+                hour: "numeric",
+                minute: "numeric",
+                hour12: true,
+              })}
+            </Text>
+            <Text style={{ backgroundColor: "#227093", color: "white" }}>
+              Daily Report
+            </Text>
+            <Text style={styles.col1}>Total Solds</Text>
+            <Text style={styles.col1}>Total Purchases</Text>
+            <Text style={styles.col1}>Total Losses</Text>
+            <Text style={styles.col1}>Sell Amount</Text>
+            <Text style={styles.col1}>Recieved Today</Text>
+            <Text style={styles.col1}>Due Of Today(Sell)</Text>
+            <Text style={styles.col1}>Purchase Amount</Text>
+            <Text style={styles.col1}>Paid Today</Text>
+            <Text style={styles.col1}>Due Of Today(Purchase)</Text>
+            <Text style={styles.col1}>Loss Of Today</Text>
+            <Text style={{ ...styles.col1, color: "#3d3d3d" }}>
+              Stock Available
+            </Text>
+            <Text style={{ ...styles.col1, color: "#227093" }}>
+              Stock Amount
+            </Text>
+            <Text
+              style={{ ...styles.col1, color: "#474787", fontWeight: "bold" }}>
+              Today's Profit
+            </Text>
+          </View>
+          <View
+            style={{
+              marginTop: 3,
+              marginRight: 15,
+              padding: 0,
+              flexGrow: 1,
+              textAlign: "left",
+            }}>
+            <Text
+              style={{
+                fontSize: "30px",
+                padding: "10px",
+                marginBottom: "10px",
+              }}>
+              {" "}
+            </Text>
+            <Text
+              style={{ fontSize: "10px", padding: "5px", marginBottom: "1px" }}>
+              {" "}
+            </Text>
+            <Text
+              style={{
+                fontSize: "10px",
+                padding: "5px",
+                marginBottom: "10px",
+              }}>
+              {" "}
+            </Text>
+            <Text style={{ fontSize: "20px", padding: "5px" }}> </Text>
+
+            <Text style={styles.col2}>{this.state.totalSelled.length}</Text>
+            <Text style={styles.col2}>{this.state.totalPurchased.length}</Text>
+            <Text style={styles.col2}>{this.state.todayLoss.length}</Text>
+            <Text style={styles.col2}>
+              {this.state.sellData == null
+                ? 0
+                : this.state.sellData.totalAmount}
+            </Text>
+            <Text style={styles.col2}>
+              {this.state.sellData == null ? 0 : this.state.sellData.recieved}
+            </Text>
+            <Text style={styles.col2}>
+              {this.state.sellData == null ? 0 : this.state.sellData.due}
+            </Text>
+            <Text style={styles.col2}>
+              {this.state.purchaseData == null
+                ? 0
+                : this.state.purchaseData.totalAmount}
+            </Text>
+            <Text style={styles.col2}>
+              {this.state.purchaseData == null
+                ? 0
+                : this.state.purchaseData.paid}
+            </Text>
+            <Text style={styles.col2}>
+              {this.state.purchaseData == null
+                ? 0
+                : this.state.purchaseData.due}
+            </Text>
+            <Text style={styles.col2}>{this.state.totalLoss}</Text>
+            <Text style={{ ...styles.col2, color: "#3d3d3d" }}>
+              {totalFish}
+            </Text>
+            <Text style={{ ...styles.col2, color: "#227093" }}>
+              {totalStock}
+            </Text>
+            <Text style={{ ...styles.col2, color: "#474787" }}>
+              {this.state.profit}
+            </Text>
+          </View>
+        </Page>
+      </Document>
     );
   };
 }

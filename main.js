@@ -1,5 +1,7 @@
 /** @format */
 
+// import "babel-polyfill";
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
@@ -13,6 +15,9 @@ const sellController = require("./routes/api/sell");
 const purchaseController = require("./routes/api/purchase");
 const operationController = require("./routes/api/operation");
 const costController = require("./routes/api/others");
+
+const dbUrl = "mongodb://localhost:27017/inventory";
+const mode = "production";
 
 require("./models/person");
 require("./models/category");
@@ -33,7 +38,7 @@ app.use("/ext", express.static("ext"));
 app.use("/media", express.static("media"));
 
 //DB CONNECTION
-mongoose.connect(process.env.DB_CONNECTION, {
+mongoose.connect(dbUrl, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -53,19 +58,22 @@ app.use("/api/purchase", purchaseController);
 app.use("/api/operation", operationController);
 app.use("/api/cost", costController);
 
+if (mode === "production") {
+  const root = require("path").join(__dirname, "client", "build");
+  app.use(express.static(root));
+  app.get("*", (req, res) => {
+    res.sendFile("index.html", { root });
+  });
+}
+
 app.get("/", (req, res) => {
   res.send("foo");
 });
-
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static("client/build"));
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
-  });
-}
 
 //SERVER CREATION
 const PORT = process.env.PORT || 7777;
 app.listen(PORT, () => {
   console.log(`Server is running......${PORT}`);
 });
+
+module.exports.server = app;

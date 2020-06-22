@@ -100,6 +100,46 @@ router.get("/all", async (req, res) => {
   });
 });
 
+router.get("/trans/all", async (req, res) => {
+  const dailyPipeline = [
+    // {
+    //   $match: {
+    //     time: { $gte: start, $lt: end },
+    //   },
+    // },
+    {
+      $lookup: {
+        from: "clients",
+        localField: "cid",
+        foreignField: "cid",
+        as: "client",
+      },
+    },
+  ];
+  const data = await transections.aggregate(dailyPipeline);
+  res.json(data);
+});
+
+router.get("/daily/trans", async (req, res) => {
+  const dailyPipeline = [
+    {
+      $match: {
+        time: { $gte: start, $lt: end },
+      },
+    },
+    {
+      $lookup: {
+        from: "clients",
+        localField: "cid",
+        foreignField: "cid",
+        as: "client",
+      },
+    },
+  ];
+  const data = await transections.aggregate(dailyPipeline);
+  res.json(data);
+});
+
 router.get("/all/monthly", async (req, res) => {
   const sellData = await transections.aggregate(sellPipeline);
   const purchaseData = await transections.aggregate(purchasePipeline);
