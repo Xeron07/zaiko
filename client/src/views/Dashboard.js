@@ -69,6 +69,7 @@ import {
   Document,
   StyleSheet,
   PDFViewer,
+  PDFDownloadLink,
 } from "@react-pdf/renderer";
 
 const styles = StyleSheet.create({
@@ -125,6 +126,7 @@ class Dashboard extends React.Component {
     };
     this.state = {
       modalLarge: false,
+      modalDownload: false,
       sellData: {},
       purchaseData: {},
       totalSelled: [],
@@ -572,7 +574,13 @@ class Dashboard extends React.Component {
             <ModalHeader
               className='justify-content-center'
               toggle={this.toggleModalLarge}>
-              PDF
+              PDF{"  "}
+              <i
+                className='tim-icons icon-cloud-download-93'
+                style={{ cursor: "pointer" }}
+                onClick={() => {
+                  this.toggleModalDownload();
+                }}></i>
             </ModalHeader>
             <ModalBody style={{ background: "transparent" }}>
               <div
@@ -592,6 +600,23 @@ class Dashboard extends React.Component {
               </div>
             </ModalBody>
           </Modal>
+          <Modal
+            className='lg'
+            isOpen={this.state.modalDownload}
+            toggle={() => {
+              this.toggleModalDownload();
+            }}>
+            <ModalBody style={{ backgroundColor: "#3d3d3d" }}>
+              {this.pdfDownloader()}
+            </ModalBody>
+            <ModalFooter style={{ backgroundColor: "#3d3d3d" }}>
+              <Button
+                color='secondary'
+                onClick={() => this.toggleModalDownload()}>
+                Close
+              </Button>
+            </ModalFooter>
+          </Modal>
         </div>
       </>
     );
@@ -601,6 +626,24 @@ class Dashboard extends React.Component {
     this.setState({
       modalLarge: !this.state.modalLarge,
     });
+  };
+  toggleModalDownload = () => {
+    this.setState({
+      modalDownload: !this.state.modalDownload,
+    });
+  };
+  pdfDownloader = () => {
+    return (
+      <div>
+        <PDFDownloadLink
+          document={this.MyDocument()}
+          fileName={`DailyReport-${new Date().getDate()}-${new Date().getMonth()}-${new Date().getFullYear()}_${Date.now()}.pdf`}>
+          {({ blob, url, loading, error }) =>
+            loading ? "Loading document..." : "Download now!"
+          }
+        </PDFDownloadLink>
+      </div>
+    );
   };
   showProductList = () => {
     console.clear();
