@@ -2,7 +2,9 @@
 
 import React from "react";
 import Swal from "sweetalert2";
-
+import Autosuggest from "react-autosuggest";
+import IsolatedScroll from "react-isolated-scroll";
+import "./theme.css";
 // reactstrap components
 import {
   Breadcrumb,
@@ -18,6 +20,7 @@ import {
   Input,
   Row,
   Col,
+  Table,
   Label,
   UncontrolledDropdown,
   DropdownToggle,
@@ -25,14 +28,46 @@ import {
   DropdownItem,
 } from "reactstrap";
 import axios from "axios";
+
+/**
+ * Auto suggestion handler
+ */
+
+let productList = [];
+// Teach Autosuggest how to calculate suggestions for any given input value.
+const escapeRegexCharacters = (str) => {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+const getSuggestions = (value) => {
+  const inputValue = value.trim().toLowerCase();
+  const inputLength = inputValue.length;
+  const escapedValue = escapeRegexCharacters(value.trim());
+
+  if (escapedValue === "") {
+    return [];
+  }
+
+  const regex = new RegExp("^" + escapedValue, "i");
+
+  return productList.filter((lan) => regex.test(lan.name));
+};
+
+// When suggestion is clicked, Autosuggest needs to populate the input
+// based on the clicked suggestion. Teach Autosuggest how to calculate the
+// input value for every given suggestion.
+const getSuggestionValue = (suggestion) => suggestion.name;
+
 class Sells extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      products: [],
+      value: "",
+      suggestions: [],
+      storageData: [],
       clientUI: {
         old: true,
       },
+      cid: "",
       ui: 0,
 
       //data
@@ -44,20 +79,20 @@ class Sells extends React.Component {
         p_id: 0,
         quantity: 0,
         remaining: 0,
-      },
-      paymentData: {
-        paid: 0,
         unitPrice: 0,
-        amount: 0,
-        only_price: 0,
-        discount: 0,
-        quantity: 0,
-        e_id: "0",
+        total: 0,
+        name: "",
+        old: false,
+        index: -1,
       },
-      partialData: {
-        active: false,
-        paid: 0,
+      products: [],
+      paymentData: {
+        totalAmount: 1000,
+        onlyPrice: 1000,
+        paid: "",
         due: 0,
+        totalItems: 0,
+        discount: 0,
       },
       expensePrice: 0,
       expenseData: {
@@ -78,6 +113,33 @@ class Sells extends React.Component {
     };
   }
 
+  /**
+   * Autosuggession
+   */
+
+  // Use your imagination to render suggestions.
+  renderSuggestion = (suggestion) => <span>{suggestion.name}</span>;
+  onChange = (event, { newValue }) => {
+    this.setState({
+      value: newValue,
+    });
+  };
+
+  // Autosuggest will call this function every time you need to update suggestions.
+  // You already implemented this logic above, so just use it.
+  onSuggestionsFetchRequested = ({ value }) => {
+    this.setState({
+      suggestions: getSuggestions(value),
+    });
+  };
+
+  // Autosuggest will call this function every time you need to clear suggestions.
+  onSuggestionsClearRequested = () => {
+    this.setState({
+      suggestions: [],
+    });
+  };
+
   componentDidMount = () => {
     this.reloadProductData();
   };
@@ -86,32 +148,37 @@ class Sells extends React.Component {
     fetch("/api/product/all")
       .then((response) => response.json())
       .then((data) => {
-        if (data.err == "no") this.setState({ products: [...data.data] });
+        if (data.err == "no") {
+          this.setState({ storageData: [...data.data] });
+          productList = [...data.data];
+        }
       });
   };
 
-  productDataView = () => {
-    if (this.state.products.length == 0) return;
-
-    return this.state.products.map((p) => {
-      return (
-        <option key={p.p_id} value={p.p_id}>
-          {p.name}
-        </option>
-      );
-    });
+  calculateOnlyPrice = () => {
+    let total = 0;
+    this.state.products.forEach(
+      (p) => (total = +total + +(p.unitPrice * p.quantity))
+    );
+    console.clear();
+    console.log(total);
+    this.state.paymentData.onlyPrice = total;
+    this.state.paymentData.totalAmount = this.getTotalAmountWithExpense();
+    this.state.paymentData.discount = 0;
+    this.setState(this.state);
+    this.calculateDue();
   };
 
-  handleProductChanges = (event) => {
-    let pid = event.target.value;
-    let data = this.state.products.filter((p) => {
-      if (p.p_id === pid) return p;
-    });
-    data = data[0];
-    console.log(data);
+  handleProductChanges = (event, val) => {
+    const data = val.suggestion;
+    this.state.value = val.suggestionValue;
+
     this.state.productData.p_id = data.p_id;
     this.state.productData.remaining = data.amount;
-    this.state.paymentData.unitPrice = data.unit_price;
+    this.state.productData.unitPrice = data.unit_price;
+    this.state.productData.name = data.name;
+    this.state.productData.old = false;
+    this.state.productData.index = -1;
     this.setState(this.state);
     console.log(this.state.productData);
   };
@@ -119,16 +186,14 @@ class Sells extends React.Component {
   calculateDue = () => {
     let paid = this.state.paymentData.paid;
 
-    this.state.partialData.active =
-      paid == this.state.paymentData.amount ? false : true;
-    this.state.partialData.paid = paid;
-    this.state.partialData.due = this.state.paymentData.amount - paid;
+    this.state.paymentData.due =
+      this.state.paymentData.totalAmount - (paid ? paid : 0);
 
     this.setState(this.state);
   };
 
   getTotalAmountWithExpense = () => {
-    return this.state.paymentData.only_price + this.state.expensePrice;
+    return +this.state.paymentData.onlyPrice + +this.state.expensePrice;
   };
 
   handleQuantityChange = (event) => {
@@ -138,24 +203,9 @@ class Sells extends React.Component {
     } else {
       this.state.productData.quantity = this.state.paymentData.quantity =
         val == "" || val < 0 ? 0 : val;
-      this.state.paymentData.only_price =
-        val * this.state.paymentData.unitPrice;
-      this.state.paymentData.amount = this.getTotalAmountWithExpense();
-      this.setState(this.state);
-      this.calculateDue();
-    }
-  };
 
-  handleDiscountChange = (event = null) => {
-    let val =
-      event != null ? event.target.value : this.state.paymentData.discount;
-    let pamount = this.getTotalAmountWithExpense();
-    this.state.paymentData.discount = val < pamount * 0.8 && val > 0 ? val : 0;
-    val > pamount * 0.8 && alert("Discount can't be more than 80%");
-    this.state.paymentData.paid = 0;
-    this.state.paymentData.amount = pamount - this.state.paymentData.discount;
-    this.setState(this.state);
-    this.calculateDue();
+      this.setState(this.state);
+    }
   };
 
   handlePaidChange = (event) => {
@@ -168,7 +218,40 @@ class Sells extends React.Component {
     this.calculateDue();
   };
 
+  addProduct = () => {
+    if (this.state.productData.quantity <= 0) {
+      alert("No Quantity ?..");
+      return;
+    }
+    if (!this.state.productData.old)
+      this.state.products.push({ ...this.state.productData });
+    else {
+      let index = this.state.productData.index;
+      this.state.products[index].quantity = this.state.productData.quantity;
+    }
+    console.clear();
+    console.log(this.state.productData);
+    console.log(this.state.products);
+    this.state.productData.p_id = 0;
+    this.state.productData.quantity = 0;
+    this.state.productData.remaining = 0;
+    this.state.productData.unitPrice = 0;
+    this.state.productData.old = false;
+    this.state.productData.index = -1;
+    this.state.value = "";
+    this.setState(this.state);
+    this.calculateOnlyPrice();
+  };
+
   render() {
+    const { value, suggestions } = this.state;
+
+    // Autosuggest will pass through all these props to the input.
+    const inputProps = {
+      placeholder: "Type a fish name",
+      value,
+      onChange: this.onChange,
+    };
     return (
       <>
         <div className='content'>
@@ -180,7 +263,6 @@ class Sells extends React.Component {
                 </CardHeader>
                 <CardBody>
                   <Form>
-                    <br />
                     <fieldset
                       style={{
                         border: "1px solid ",
@@ -191,24 +273,24 @@ class Sells extends React.Component {
                         Product Information
                       </legend>
                       <Row>
-                        <Col className='pr-md-1' md='4'>
-                          <FormGroup>
-                            <label htmlFor='exampleSelect1'>
-                              Product Select
-                            </label>
-                            <Input
-                              type='select'
-                              name='select'
-                              id='exampleSelect1'
-                              defaultValue='0'
-                              onChange={this.handleProductChanges}>
-                              <option value='0' disabled>
-                                Select one
-                              </option>
-                              {this.productDataView()}
-                            </Input>
-                          </FormGroup>
+                        <Col className='pr-md-1' md='10'>
+                          <Autosuggest
+                            suggestions={suggestions}
+                            onSuggestionsFetchRequested={
+                              this.onSuggestionsFetchRequested
+                            }
+                            onSuggestionsClearRequested={
+                              this.onSuggestionsClearRequested
+                            }
+                            getSuggestionValue={getSuggestionValue}
+                            renderSuggestion={this.renderSuggestion}
+                            inputProps={inputProps}
+                            onSuggestionSelected={this.handleProductChanges}
+                          />
                         </Col>
+                      </Row>
+                      <br />
+                      <Row>
                         <Col className='pr-md-1' md='3'>
                           <FormGroup>
                             <label>Quantity(kg)</label>
@@ -233,72 +315,42 @@ class Sells extends React.Component {
                             />
                           </FormGroup>
                         </Col>
-                      </Row>
-                    </fieldset>
-                    <br />
-                    <fieldset
-                      style={{
-                        border: "1px solid ",
-                        padding: "10px",
-                        borderRadius: "5px",
-                      }}>
-                      <legend style={{ fontSize: "medium" }}>
-                        Payment Information
-                      </legend>
-                      <Row>
-                        <Col className='pr-md-1' md='5'>
+
+                        <Col className='pr-md-1' md='3'>
                           <FormGroup>
-                            <label>Discount</label>
+                            <label>Unit Price(kg)</label>
                             <Input
-                              value={this.state.paymentData.discount}
-                              onChange={this.handleDiscountChange}
-                              placeholder='discount'
+                              style={{ color: "#f19066" }}
+                              placeholder='Not Selected'
                               type='number'
-                            />
-                          </FormGroup>
-                        </Col>
-                        <Col className='pr-md-1' md='5'>
-                          <FormGroup>
-                            <label>Paid</label>
-                            <Input
-                              onChange={this.handlePaidChange}
-                              value={this.state.paymentData.paid}
-                              placeholder='Not paid'
-                              type='number'
-                            />
-                          </FormGroup>
-                        </Col>
-                      </Row>
-                      <Row>
-                        <Col className='pr-md-1' md='5'>
-                          <FormGroup>
-                            <label>Due</label>
-                            <Input
-                              style={{ color: "#e67e22" }}
-                              value={this.state.partialData.due}
-                              placeholder='Not paid'
-                              type='number'
+                              value={this.state.productData.unitPrice}
                               disabled
                             />
                           </FormGroup>
                         </Col>
-                        <Col className='pr-md-1' md='5'>
+
+                        <Col className='pr-md-1' md='3'>
                           <br />
-                          <FormGroup check>
-                            <Label check>
-                              <Input
-                                type='checkbox'
-                                onClick={this.addDelivery}
-                              />{" "}
-                              Add Delivery Charge
-                              <span className='form-check-sign'>
-                                <span className='check'></span>
-                              </span>
-                            </Label>
-                          </FormGroup>
+                          <Button
+                            className='btn-fill'
+                            onClick={() => this.addProduct()}
+                            color='primary'
+                            type='button'>
+                            Add
+                          </Button>
                         </Col>
                       </Row>
                     </fieldset>
+                    <br />
+
+                    <Row>
+                      <Col md='12'>
+                        <Card>
+                          <CardHeader>{this.setBradeCumb()}</CardHeader>
+                          <CardBody>{this.showView()}</CardBody>
+                        </Card>
+                      </Col>
+                    </Row>
                   </Form>
                 </CardBody>
                 <CardFooter>
@@ -315,60 +367,167 @@ class Sells extends React.Component {
             <Col md='5'>
               <Card>
                 <CardHeader>
-                  <h5 className='title'>Price</h5>
+                  <h5 className='title'>Transection</h5>
                 </CardHeader>
                 <CardBody>
-                  <Row>
-                    <Col className='pr-md-1' md='5'>
-                      <FormGroup>
-                        <label>Unit Price</label>
-                        <Input
-                          placeholder='Not Selected'
-                          type='number'
-                          value={this.state.paymentData.unitPrice}
-                          style={{ color: "#16a085" }}
-                          disabled
-                        />
-                      </FormGroup>
-                    </Col>
-                    <Col className='pr-md-1' md='5'>
-                      <FormGroup>
-                        <label>Total Price</label>
-                        <Input
-                          placeholder=''
-                          type='number'
-                          value={this.state.paymentData.only_price}
-                          style={{ color: "#f5cd79" }}
-                          disabled
-                        />
-                      </FormGroup>
-                    </Col>
+                  <h6>
+                    Total Item(s):
+                    <span style={{ position: "absolute", right: "5%" }}>
+                      {this.state.products.length}
+                    </span>
+                  </h6>
+                  <hr />
 
-                    <Col className='pr-md-1' md='8'>
-                      <FormGroup>
-                        <label>
-                          (With Expense{" "}
-                          {this.state.paymentData.discount == 0
-                            ? ""
-                            : "& Discount"}{" "}
-                          ){" "}
-                        </label>
-                        <Input
-                          placeholder=''
-                          value={this.state.paymentData.amount}
-                          type='number'
-                          style={{ color: "#2980b9" }}
-                          disabled
-                        />
-                      </FormGroup>
+                  <h6>
+                    Total Price(s):
+                    <span style={{ position: "absolute", right: "5%" }}>
+                      {this.state.paymentData.onlyPrice}
+                    </span>
+                  </h6>
+
+                  <h6>
+                    Total Price(with expense)(s):
+                    <span style={{ position: "absolute", right: "5%" }}>
+                      {this.state.paymentData.totalAmount}
+                    </span>
+                  </h6>
+                  <hr />
+                  <Row>
+                    <Col className='pr-md-1' md='9'>
+                      <h6>Discount:</h6>
+                    </Col>
+                    <Col className='pr-md-1' md='3'>
+                      <input
+                        style={{
+                          color: "#f19066",
+                          width: "100%",
+                          borderLeft: "0px",
+                          borderRight: "0px",
+                          borderTop: "0px",
+                          backgroundColor: "transparent",
+                          textAlign: "center",
+                        }}
+                        placeholder='Not Selected'
+                        type='number'
+                        value={this.state.paymentData.discount}
+                        onChange={(event) => {
+                          this.state.paymentData.discount = event.target.value
+                            ? event.target.value
+                            : 0;
+                          if (
+                            this.state.paymentData.discount >
+                            this.state.paymentData.onlyPrice * 0.8
+                          ) {
+                            this.state.paymentData.discount = 0;
+                            alert("You can't give discount more than 80%");
+                          }
+                          this.state.paymentData.totalAmount =
+                            this.getTotalAmountWithExpense() -
+                            this.state.paymentData.discount;
+                          this.setState(this.state);
+                          this.calculateDue();
+                        }}
+                      />
                     </Col>
                   </Row>
+
+                  <Row>
+                    <Col className='pr-md-1' md='9'>
+                      <h6> Total Paid:</h6>
+                    </Col>
+                    <Col className='pr-md-1' md='3'>
+                      <input
+                        style={{
+                          color: "#f19066",
+                          width: "100%",
+                          borderLeft: "0px",
+                          borderRight: "0px",
+                          borderTop: "0px",
+                          backgroundColor: "transparent",
+                          textAlign: "center",
+                        }}
+                        placeholder='Not Paid'
+                        type='number'
+                        value={this.state.paymentData.paid}
+                        onChange={(eve) => {
+                          let val = eve.target.value;
+                          if (val > this.state.paymentData.totalAmount) {
+                            alert(
+                              "Please, give a valid pay amount.\n(Paument is more than total amount)"
+                            );
+                            val = "";
+                          }
+                          this.state.paymentData.paid = val ? val : "";
+                          this.state.paymentData.due =
+                            this.state.paymentData.totalAmount -
+                            (val ? val : 0);
+                          this.setState(this.state);
+                        }}
+                      />
+                    </Col>
+                  </Row>
+
+                  <hr />
+
+                  <h6>
+                    Total Due:
+                    <span style={{ position: "absolute", right: "5%" }}>
+                      {this.state.paymentData.due}
+                    </span>
+                  </h6>
                 </CardBody>
               </Card>
-
-              <Card>
-                <CardHeader>{this.setBradeCumb()}</CardHeader>
-                <CardBody>{this.showView()}</CardBody>
+              <Card style={{ height: "50%" }}>
+                <Table style={{ maxHeight: "80%", overflow: "auto" }}>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th className='text-left'>Unit Price</th>
+                      <th className='text-left'>Quantity</th>
+                      <th className='text-left'>Total price</th>
+                      <th className='text-left'>
+                        <i
+                          style={{ color: "#ff5252" }}
+                          className='tim-icons icon-trash-simple'></i>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {this.state.products.map((p, i) => {
+                      return (
+                        <tr style={{ cursor: "pointer" }} map={p.p_id}>
+                          <td
+                            onClick={() => {
+                              this.updateProduct(p, i);
+                            }}>
+                            {p.name}
+                          </td>
+                          <td
+                            onClick={() => {
+                              this.updateProduct(p, i);
+                            }}
+                            className='text-center'>
+                            {p.unitPrice}
+                          </td>
+                          <td className='text-center'>x{p.quantity}</td>
+                          <td className='text-center'>
+                            {p.unitPrice * p.quantity}
+                          </td>
+                          <td
+                            className='text-center'
+                            style={{ cursor: "pointer" }}
+                            onClick={() => {
+                              this.removeProduct(p.p_id);
+                            }}>
+                            <i
+                              style={{ color: "#ff5252" }}
+                              className='tim-icons icon-trash-simple'></i>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </Table>
               </Card>
             </Col>
           </Row>
@@ -376,6 +535,23 @@ class Sells extends React.Component {
       </>
     );
   }
+
+  updateProduct = (p, i) => {
+    this.state.productData.p_id = p.p_id;
+    this.state.productData.quantity = p.quantity;
+    this.state.productData.remaining = p.remaining;
+    this.state.productData.unitPrice = p.unitPrice;
+    this.state.productData.old = true;
+    this.state.productData.index = i;
+    this.state.value = p.name;
+    this.setState(this.state);
+  };
+
+  removeProduct = (id) => {
+    const filtered = this.state.products.filter((p) => p.p_id != id);
+    this.state.products = [...filtered];
+    this.calculateOnlyPrice();
+  };
 
   addDelivery = (event) => {
     this.state.delivery_charge.active = !this.state.delivery_charge.active;
@@ -455,6 +631,7 @@ class Sells extends React.Component {
     this.state.phoneNum = client.pn;
     this.state.clientInfo = { ...this.state.clientInfo, ...client };
     this.state.oldClients = [];
+    this.state.cid = id;
     this.setState(this.state);
   };
   clientSuggestion = () => {
@@ -637,7 +814,11 @@ class Sells extends React.Component {
                           value={this.state.expenseData.price}
                           onChange={(event) => {
                             this.state.expenseData.price = event.target.value;
+                            this.state.expensePrice = event.target.value
+                              ? event.target.value
+                              : 0;
                             this.setState(this.state);
+                            this.calculateOnlyPrice();
                           }}
                         />
                       </FormGroup>
@@ -675,8 +856,8 @@ class Sells extends React.Component {
 
   //client
   submissionData = () => {
-    if (this.state.productData.quantity == 0) {
-      Swal.fire("Oops!!", "No Quantity ? ", "warning");
+    if (this.state.products.length <= 0) {
+      Swal.fire("Oops!!", "No product(s) added ", "warning");
     } else if (
       this.state.clientInfo.name == "" ||
       this.state.clientInfo.pn == ""
@@ -691,7 +872,16 @@ class Sells extends React.Component {
       axios({
         method: "post",
         url: "/api/sell/add",
-        data: this.state,
+        data: {
+          client: {
+            old: this.state.clientUI.old,
+            info: this.state.clientInfo,
+            cid: this.state.cid,
+          },
+          expense: this.state.expenseData,
+          payment: this.state.paymentData,
+          products: this.state.products,
+        },
       })
         .then(function (response) {
           //handle success

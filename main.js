@@ -10,7 +10,9 @@ const productController = require("./routes/api/product");
 const clientController = require("./routes/api/client");
 const expenseController = require("./routes/api/expense");
 const sellController = require("./routes/api/sell");
+const purchaseController = require("./routes/api/purchase");
 const operationController = require("./routes/api/operation");
+const costController = require("./routes/api/others");
 
 require("./models/person");
 require("./models/category");
@@ -47,7 +49,9 @@ app.use("/api/client", clientController);
 
 app.use("/api/expense", expenseController);
 app.use("/api/sell", sellController);
+app.use("/api/purchase", purchaseController);
 app.use("/api/operation", operationController);
+app.use("/api/cost", costController);
 
 app.get("/", (req, res) => {
   res.send("foo");

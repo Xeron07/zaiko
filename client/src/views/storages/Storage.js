@@ -187,6 +187,9 @@ class Storage extends React.Component {
       title: "⛈ Are You Sure?",
       text: "Operation can't revertable",
       icon: "warning",
+      showCancelButton: true,
+      showCloseButton: true,
+      showLoaderOnConfirm: true,
     }).then((r) => {
       if (r.value) {
         axios({

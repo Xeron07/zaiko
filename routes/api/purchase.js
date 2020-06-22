@@ -3,11 +3,24 @@ const router = require("express").Router();
 const mongoose = require("mongoose");
 const tdata = require("../../models/transection");
 const sell = require("../../models/sell");
-const pur = require("../../models/purchase");
+const purchaseData = require("../../models/purchase");
 const productSchema = require("../../models/product");
 const clientData = require("../../models/client");
 const expenseData = require("../../models/expense");
 const partialData = require("../../models/partial");
+
+var start = new Date();
+start.setHours(0, 0, 0, 0);
+
+var end = new Date();
+end.setHours(23, 59, 59, 999);
+const timePipeline = {
+  today: {
+    $match: {
+      time: { $gte: start, $lt: end },
+    },
+  },
+};
 
 router.get("/time", async (req, res) => {
   var start = new Date();
@@ -29,7 +42,7 @@ router.get("/time", async (req, res) => {
 });
 
 router.get("/all", async (req, res) => {
-  data = await sell.aggregate([
+  const data = await purchaseData.aggregate([
     {
       $lookup: {
         from: "transections",
@@ -66,10 +79,10 @@ router.post("/add", async (req, res) => {
     cid = client.info.cid;
   }
 
-  if (expense.price > 0) {
+  if (expense.amount > 0) {
     let exp = new expenseData({
       e_id: Date.now(),
-      price: expense.price,
+      price: expense.amount,
       details: expense.details,
     });
 
@@ -96,7 +109,7 @@ router.post("/add", async (req, res) => {
 
   const transData = new tdata({
     t_id: Date.now(),
-    type: "sell",
+    type: "purchase",
     cid,
     eid,
     products: [...products],
@@ -117,10 +130,26 @@ router.post("/add", async (req, res) => {
 
   let trans = await transData.save();
   if (payment.due > 0) partialUpdate(parId, trans.t_id);
-  newSellData(trans.t_id, eid, cid);
+  newPurchaseData(trans.t_id, eid, cid);
   updateProducts(products);
 
   res.json({ status: "Success", code: 200 });
+});
+
+router.get("/avg", async (req, res) => {
+  const data = await purchaseData.aggregate([
+    timePipeline.today,
+    {
+      $lookup: {
+        from: "transections",
+        localField: "tId",
+        foreignField: "t_id",
+        as: "transection",
+      },
+    },
+  ]);
+
+  res.json({ data });
 });
 
 const partialUpdate = async (parId, tid) => {
@@ -128,20 +157,20 @@ const partialUpdate = async (parId, tid) => {
   partData.tId = tid;
   await partData.save();
 };
-const newSellData = async (tId, eid, clientId) => {
-  const sellObj = new sell({
+const newPurchaseData = async (tId, eid, clientId) => {
+  const purchaseObj = new purchaseData({
     s_id: Date.now(),
     eid,
     tId,
     clientId,
   });
 
-  await sellObj.save();
+  await purchaseObj.save();
 };
 const updateProducts = async (pros) => {
   pros.forEach(async (data) => {
     let pdata = await productSchema.findOne({ p_id: data.p_id });
-    pdata.amount -= data.quantity;
+    pdata.amount += +data.quantity;
     await pdata.save();
   });
 };

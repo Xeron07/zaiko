@@ -269,7 +269,7 @@ class SingleClient extends React.Component {
                   <Input
                     placeholder='Due'
                     type='text'
-                    value={this.state.payment.Due}
+                    value={this.state.payment.due}
                     style={{ color: "#c0392b" }}
                     disabled
                   />
@@ -293,7 +293,6 @@ class SingleClient extends React.Component {
             <th>Time</th>
             <th>Type</th>
             <th>Total</th>
-            <th>Quantity</th>
             <th>Paid</th>
             <th>Discount</th>
             <th>Details</th>
@@ -308,8 +307,7 @@ class SingleClient extends React.Component {
                   this.monthName[date.getMonth() + 1]
                 }/${date.getFullYear()}`}</td>
                 <td>{m.type}</td>
-                <td>{m.payment.amount}</td>
-                <td>{m.product.quantity}</td>
+                <td>{m.amount.totalAmount}</td>
                 <td>{m.payment.paid}</td>
                 <td>{m.payment.discount}</td>
                 <td>
@@ -337,26 +335,28 @@ class SingleClient extends React.Component {
       <Table className='tablesorter' responsive>
         <thead className='text-primary'>
           <tr>
-            <th>T_ID</th>
+            <th>#</th>
+            <th>Total</th>
             <th>Paid</th>
             <th>Due</th>
-            <th>Show</th>
+            {/* <th>Show</th> */}
           </tr>
         </thead>
         <tbody>
           {pdata.map((m) => {
             return (
               <tr>
-                <td>{m.t_id}</td>
-                <td>{m.partial.paid}</td>
-                <td>{m.partial.due}</td>
-                <td>
+                <td>{m.par_id}</td>
+                <td>{m.amount.total}</td>
+                <td>{m.amount.paid}</td>
+                <td>{m.amount.due}</td>
+                {/* <td>
                   <button
                     className='btn btn-danger'
                     onClick={() => alert(m.t_id)}>
                     Delete
                   </button>
-                </td>
+                </td> */}
               </tr>
             );
           })}

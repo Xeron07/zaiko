@@ -8,36 +8,22 @@ const transectionSchema = new Schema({
   time: { type: Date, default: Date.now }, //transection timestamp
   type: String, //transectiontype
   cid: String, //client id
-  delivery_charge: {
-    active: { type: Boolean, default: false },
-    fee: { type: Number, default: 0.0 },
-  },
-  product: {
-    p_id: String, //product id
-    quantity: { type: Number, default: 0 }, //quantity sold
-    remaining: { type: Number, default: 0 }, //remaining after sold
+  eid: String,
+  typeId: String,
+  products: { type: Array, default: [] },
+  amount: {
+    totalAmount: { type: Number, default: 0.0 },
+    totalItems: { type: Number, default: 0 },
+    onlyPrice: { type: Number, default: 0.0 },
+    discount: { type: Number, default: 0.0 },
   },
   payment: {
-    paid: { type: Number, default: 0.0 }, //total paid
-    unitPrice: { type: Number, default: 0.0 }, //product Unit price
-    amount: { type: Number, default: 0.0 }, //total calculated price
-    only_price: { type: Number, default: 0.0 }, //total price with out expense
-    discount: { type: Number, default: 0.0 }, //discount
-    quantity: { type: Number, default: 0 }, //quantity sold
-    e_id: String, //expense id
+    paid: { type: Number, default: 0.0 },
+    due: { type: Number, default: 0.0 },
   },
   partial: {
     active: { type: Boolean, default: false }, //partial payment exist or not
-    paid: { type: Number, default: 0.0 }, // paid amount
-    due: { type: Number, default: 0.0 }, //due amount
-    //keeping the partial payment history
-    history: [
-      {
-        date: { type: Date, default: Date.now }, //payment date
-        paid: { type: Number, default: 0.0 }, //pid amount
-        due: { type: Number, default: 0.0 }, //remaining due after payment
-      },
-    ],
+    id: String,
   },
 });
 

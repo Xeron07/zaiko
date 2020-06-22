@@ -40,6 +40,9 @@ import {
   Label,
   FormGroup,
   Input,
+  Modal,
+  ModalBody,
+  ModalFooter,
   Table,
   Row,
   Col,
@@ -77,11 +80,21 @@ class Dashboard extends React.Component {
       purchaseData: {},
       totalSelled: [],
       totalPurchased: [],
-      stockData: {},
+      stockData: [],
+      selectedProducts: [],
       profit: 0,
       fishTypes: 0,
+      totalLoss: 0,
       isLoading: true,
+      modalDemo: false,
+      todayLoss: [],
+      show: true,
     };
+  }
+
+  toggleModalDemo() {
+    this.state.modalDemo = !this.state.modalDemo;
+    this.setState(this.state);
   }
 
   componentDidMount = () => {
@@ -99,8 +112,10 @@ class Dashboard extends React.Component {
         this.state.totalSelled = [...data.totalSelled];
         this.state.totalPurchased = [...data.totalPurchased];
         this.state.profit = data.profit;
-        this.state.stockData = { ...data.stockData[0] };
+        this.state.stockData = [...data.stockData];
+        this.state.totalLoss = data.totalLoss;
         this.state.fishTypes = data.fishTypes;
+        this.state.todayLoss = data.todayLoss;
         this.setState(this.state);
       });
 
@@ -129,21 +144,52 @@ class Dashboard extends React.Component {
         <div className='ml-2'>
           <h5>Total Amount : {this.state.purchaseData.totalAmount}</h5>
           <h5>Paid Today : {this.state.purchaseData.paid}</h5>
-          <h5>Due Of Today : {this.state.sellData.due}</h5>
+          <h5>Due Of Today : {this.state.purchaseData.due}</h5>
         </div>
       );
     }
   };
 
   stockInfo = () => {
-    if (this.state.stockData.totalFish == null) {
+    if (this.state.stockData.length <= 0) {
       return <h3>🎣 No Stock Data</h3>;
     } else {
+      let totalFish = 0;
+      let totalStock = 0;
+      //console.clear();
+      // console.log(this.state.stockData);
+      for (let i = 0; i < this.state.stockData.length; i++) {
+        totalFish += +this.state.stockData[i].totalFish;
+        totalStock += +this.state.stockData[i].totalStock;
+      }
+
       return (
         <div className='ml-2'>
-          <h5>Total Fish Of Type(s) : {this.state.fishTypes}</h5>
-          <h5>Total Fish : {this.state.stockData.totalFish} Unit(s)</h5>
-          <h5>Total Amount: {this.state.stockData.totalStock}</h5>
+          <h5>
+            Total Fish Of Type(s) :&nbsp;
+            <i>
+              <b style={{ color: "orange" }}>{this.state.fishTypes}</b>
+            </i>{" "}
+          </h5>
+          <h5>
+            Total Fish :{" "}
+            <i>
+              <b style={{ color: "yellow" }}>{totalFish}</b>
+            </i>{" "}
+            Unit(s)
+          </h5>
+          <h5>
+            Total Amount:{" "}
+            <i>
+              <b style={{ color: "green" }}>{totalStock}</b>
+            </i>{" "}
+          </h5>
+          <h5>
+            Loss Amount:{" "}
+            <i>
+              <b style={{ color: "#b33939" }}>{this.state.totalLoss}</b>
+            </i>{" "}
+          </h5>
         </div>
       );
     }
@@ -159,7 +205,7 @@ class Dashboard extends React.Component {
           <tr>
             <th>Time</th>
             <th>Total</th>
-            <th>Quantity</th>
+            <th>Items</th>
             <th>Paid</th>
 
             <th>Client</th>
@@ -176,23 +222,34 @@ class Dashboard extends React.Component {
                   this.monthName[date.getMonth() + 1]
                 }/${date.getFullYear()}`}</td>
 
-                <td>{m.payment.amount}</td>
-                <td>{m.product.quantity}</td>
+                <td>{m.amount.totalAmount}</td>
+                <td>{m.amount.totalItems}</td>
                 <td>{m.payment.paid}</td>
 
                 <td>
-                  <Link to={`/admin/clent/${m.cid}`}>Client</Link>
+                  <Link to={`/admin/client/${m.cid}`}>Client</Link>
                 </td>
 
                 <td>
                   <Link
-                    to={`/admin/exp/${m.payment.e_id}`}
-                    disabled={m.payment.e_id == 0 ? true : false}>
+                    to={`/admin/exp/${m.eid}`}
+                    style={
+                      m.eid == 0 ? { display: "none" } : { display: "block" }
+                    }>
                     Expense
                   </Link>
                 </td>
-                <td>
-                  <Link to={`/admin/single/${m.product.p_id}`}>Product</Link>
+                <td style={{ cursor: "pointer" }}>
+                  <a
+                    style={{ color: "#7158e2" }}
+                    onClick={() => {
+                      this.setState({
+                        selectedProducts: [...m.products],
+                        modalDemo: true,
+                      });
+                    }}>
+                    Products
+                  </a>
                 </td>
               </tr>
             );
@@ -212,7 +269,7 @@ class Dashboard extends React.Component {
           <tr>
             <th>Time</th>
             <th>Total</th>
-            <th>Quantity</th>
+            <th>Items</th>
             <th>Paid</th>
 
             <th>Client</th>
@@ -229,23 +286,34 @@ class Dashboard extends React.Component {
                   this.monthName[date.getMonth() + 1]
                 }/${date.getFullYear()}`}</td>
 
-                <td>{m.payment.amount}</td>
-                <td>{m.product.quantity}</td>
+                <td>{m.amount.totalAmount}</td>
+                <td>{m.amount.totalItems}</td>
                 <td>{m.payment.paid}</td>
 
                 <td>
-                  <Link to={`/admin/clent/${m.cid}`}>Client</Link>
+                  <Link to={`/admin/client/${m.cid}`}>Client</Link>
                 </td>
 
                 <td>
                   <Link
-                    to={`/admin/exp/${m.payment.e_id}`}
-                    disabled={m.payment.e_id == 0 ? true : false}>
+                    to={`/admin/exp/${m.eid}`}
+                    style={
+                      m.eid == 0 ? { display: "none" } : { display: "block" }
+                    }>
                     Expense
                   </Link>
                 </td>
-                <td>
-                  <Link to={`/admin/single/${m.product.p_id}`}>Product</Link>
+                <td style={{ cursor: "pointer" }}>
+                  <a
+                    style={{ color: "#7158e2" }}
+                    onClick={() => {
+                      this.setState({
+                        selectedProducts: [...m.products],
+                        modalDemo: true,
+                      });
+                    }}>
+                    Products
+                  </a>
                 </td>
               </tr>
             );
@@ -263,19 +331,42 @@ class Dashboard extends React.Component {
             <Col lg='4'>
               <Card className='card-chart'>
                 <CardHeader>
-                  <h5 className='card-category'>
+                  <h5
+                    className='card-category'
+                    onClick={() => {
+                      this.setState({ show: !this.state.show });
+                    }}>
                     Total Shipments (Today-
                     {parseInt(this.state.totalSelled.length) +
                       parseInt(this.state.totalPurchased.length)}
                     )
                   </h5>
                   <CardTitle tag='h3'>
-                    <i className='tim-icons icon-bell-55 text-info' />
-                    {this.state.profit}
+                    <i
+                      className='tim-icons icon-bell-55 text-info'
+                      onClick={() => {
+                        this.setState({ show: !this.state.show });
+                      }}
+                    />
+                    <span
+                      style={
+                        this.state.show
+                          ? { display: "inline-block" }
+                          : { display: "none" }
+                      }>
+                      {this.state.profit}
+                    </span>
                   </CardTitle>
                 </CardHeader>
                 <CardBody>
-                  <h5>Profit- 💸 {this.state.profit}</h5>
+                  <h5
+                    style={
+                      this.state.show
+                        ? { display: "block" }
+                        : { display: "none" }
+                    }>
+                    Profit- 💸 {this.state.profit}
+                  </h5>
                   <h5>
                     Total Sold:{" "}
                     <i style={{ color: "#16a085" }}>
@@ -286,6 +377,12 @@ class Dashboard extends React.Component {
                     Total Purchased:{" "}
                     <i style={{ color: "#16a085" }}>
                       {this.state.totalPurchased.length}
+                    </i>
+                  </h5>
+                  <h5>
+                    Total Loss:{" "}
+                    <i style={{ color: "red" }}>
+                      {this.state.todayLoss.length}
                     </i>
                   </h5>
                 </CardBody>
@@ -358,10 +455,73 @@ class Dashboard extends React.Component {
               </Card>
             </Col>
           </Row>
+          <Modal
+            className='lg'
+            isOpen={this.state.modalDemo}
+            toggle={() => {
+              this.toggleModalDemo();
+            }}>
+            <div
+              className='modal-header'
+              style={{ backgroundColor: "#3d3d3d" }}>
+              <h5
+                className='modal-title'
+                id='exampleModalLabel'
+                style={{ color: "white" }}>
+                Products
+              </h5>
+              {/* <button
+                type='button'
+                className='close'
+                data-dismiss='modal'
+                aria-hidden='true'
+                onClick={() => {
+                  this.toggleModalDemo();
+                }}>
+                <i className='tim-icons icon-simple-remove' />
+              </button> */}
+            </div>
+            <ModalBody style={{ backgroundColor: "#3d3d3d" }}>
+              {this.showProductList()}
+            </ModalBody>
+            <ModalFooter style={{ backgroundColor: "#3d3d3d" }}>
+              <Button color='secondary' onClick={() => this.toggleModalDemo()}>
+                Close
+              </Button>
+            </ModalFooter>
+          </Modal>
         </div>
       </>
     );
   }
+  showProductList = () => {
+    console.clear();
+    console.log(this.state.selectedProducts);
+    return (
+      <Table style={{ maxHeight: "80%", overflow: "auto" }}>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th className='text-left'>Unit Price</th>
+            <th className='text-left'>Quantity</th>
+            <th className='text-left'>Total price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {this.state.selectedProducts.map((p, i) => {
+            return (
+              <tr style={{ cursor: "pointer" }} map={p.p_id}>
+                <td>{p.name}</td>
+                <td className='text-center'>{p.unitPrice}</td>
+                <td className='text-center'>x{p.quantity}</td>
+                <td className='text-center'>{p.unitPrice * p.quantity}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </Table>
+    );
+  };
 }
 
 export default Dashboard;

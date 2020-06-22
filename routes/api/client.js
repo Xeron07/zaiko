@@ -5,7 +5,9 @@ const mongoose = require("mongoose");
 const tdata = require("../../models/transection");
 const sell = require("../../models/sell");
 const pur = require("../../models/purchase");
+const par = require("../../models/partial");
 const clientData = require("../../models/client");
+
 const { clientValidation } = require("./validation");
 
 router.get("/all", async (req, res) => {
@@ -56,20 +58,21 @@ router.get("/details/:id", async (req, res) => {
   const c_id = req.params.id;
   const clientInfo = await clientData.findOne({ cid: c_id });
   const transections = await tdata.find({ cid: c_id });
+  const partials = await par.find({ clientId: c_id }).where({ status: true });
   const payment = await tdata.aggregate([
     {
-      $project: {
-        amount: { $add: "$payment.amount" },
-        due: { $add: "$partial.due" },
-        paid: { $add: "$payment.paid" },
+      $match: { cid: c_id },
+    },
+    {
+      $group: {
+        _id: null,
+        amount: { $sum: "$amount.totalAmount" },
+        due: { $sum: "$payment.due" },
+        paid: { $sum: "$payment.paid" },
       },
     },
   ]);
-  const query = tdata
-    .find({ cid: c_id })
-    .where({ "partial.active": true })
-    .select("partial t_id -_id");
-  const partials = await query.exec();
+  console.log(payment);
   res.json({ clientInfo, payment: payment[0], transections, partials });
 });
 

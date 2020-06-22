@@ -33,6 +33,9 @@ import Client from "./views/clients/Client.js";
 import Expense from "./views/expenses/Expense.js";
 import Transection from "./views/transections/trans.js";
 import SingleExpense from "./views/expenses/singleExpense.js";
+import Loss from "./views/loss/loss.js";
+import Cost from "./views/dashboard/cost.js";
+import Report from "./views/report/report.js";
 var routes = [
   {
     path: "/dashboard",
@@ -43,10 +46,26 @@ var routes = [
     layout: "/admin",
   },
   {
+    path: "/report",
+    name: "Report",
+    rtlName: "لوحة القيادة",
+    icon: "tim-icons icon-chart-bar-32",
+    component: Report,
+    layout: "/admin",
+  },
+  {
+    path: "/cost",
+    name: "Monthly Cost Data",
+    rtlName: "لوحة القيادة",
+    icon: "tim-icons icon-coins",
+    component: Cost,
+    layout: "/admin",
+  },
+  {
     path: "/transection",
     name: "Transections",
     rtlName: "لوحة القيادة",
-    icon: "tim-icons icon-chart-pie-36",
+    icon: "tim-icons icon-money-coins",
     component: Transection,
     layout: "/admin",
   },
@@ -90,14 +109,14 @@ var routes = [
     component: Expense,
     layout: "/admin",
   },
-  // {
-  //   path: "/expense/:id",
-  //   name: "Expense data (Single)",
-  //   rtlName: "لوحة القيادة",
-  //   icon: "tim-icons icon-bus-front-12",
-  //   component: Expense,
-  //   layout: "/hidden",
-  // },
+  {
+    path: "/loss",
+    name: "Add Loss",
+    rtlName: "لوحة القيادة",
+    icon: "tim-icons icon-trash-simple",
+    component: Loss,
+    layout: "/admin",
+  },
   // {
   //   path: "/icons",
   //   name: "Icons",

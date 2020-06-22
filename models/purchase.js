@@ -1,10 +1,15 @@
+/** @format */
+
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const purchaseSchema = new Schema({
-  per_id: String,//purchases id
-  eid: String,//expense id
-  tid:String//transection id
+  pur_id: String, //purchase id
+  eid: String, //expense id
+  tId: String,
+  status: { type: Boolean, default: true },
+  clientId: String,
+  time: { type: Date, default: Date.now },
 });
 
 module.exports = mongoose.model("purchase", purchaseSchema);

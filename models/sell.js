@@ -6,9 +6,10 @@ const { Schema } = mongoose;
 const sellSchema = new Schema({
   s_id: String, //sell id
   eid: String, //expense id
-  transection: String,
-  status: String,
-  client: String,
+  tId: String,
+  status: { type: Boolean, default: true },
+  clientId: String,
+  time: { type: Date, default: Date.now },
 });
 
 module.exports = mongoose.model("sell", sellSchema);

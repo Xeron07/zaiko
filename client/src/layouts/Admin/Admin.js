@@ -32,7 +32,7 @@ import SingleExpense from "../../views/expenses/singleExpense.js";
 import addStorage from "../../views/storages/addStorage.js";
 import singleStorage from "../../views/storages/singleStorage.js";
 import singleClient from "../../views/clients/singleClient.js";
-
+import pdfComponent from "../../views/pdf.js";
 import routes from "routes.js";
 
 import logo from "assets/img/react-logo.png";
@@ -171,6 +171,13 @@ class Admin extends React.Component {
                 path='/admin/client/:id'
                 component={singleClient}
                 key={127}
+                exact
+              />
+
+              <Route
+                path='/admin/pdf/:tid'
+                component={pdfComponent}
+                key={128}
                 exact
               />
               <Redirect from='*' to='/admin/dashboard' />
